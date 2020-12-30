@@ -1,0 +1,42 @@
+{
+    "name": "lcmaquino/googleoauth2",
+    "description": "GoogleOAuth2 provides to Laravel an package for Google OAuth 2.0 authentication.",
+    "keywords": ["oauth", "google", "laravel"],
+    "license": "GPL-3.0-or-later",
+    "homepage": "https://github.com/lcmaquino/googleoauth2",
+    "support": {
+        "issues": "https://github.com/lcmaquino/googleoauth2/issues",
+        "source": "https://github.com/lcmaquino/googleoauth2"
+    },
+    "authors": [
+        {
+            "name": "Luiz C. M. de Aquino",
+            "email": "aquino.luizclaudio@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^7.2",
+        "illuminate/http": "^6.0|^7.0|^8.0",
+        "illuminate/support": "^6.0|^7.0|^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Lcmaquino\\GoogleOAuth2\\": "src/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "1.x-dev"
+        },
+        "laravel": {
+            "providers": [
+                "Lcmaquino\\GoogleOAuth2\\GoogleOAuth2Provider"
+            ],
+            "aliases": {
+                "GoogleAuth": "Lcmaquino\\GoogleOAuth2\\Facades\\GoogleOAuth2"
+            }
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
