@@ -6,9 +6,14 @@ class HttpClient
 {
     protected $ch;
 
-    public function __construct()
+    protected function init()
     {
         $this->ch = curl_init();
+    }
+
+    protected function close()
+    {
+        curl_close($this->ch);
     }
 
     /**
@@ -18,12 +23,17 @@ class HttpClient
      * @param array $query
      * @return array|null
      */
-    public function get($url = '', $query = [])
+    public function get($url = '', $query = [], $header = [])
     {
+        $this->init();
+
         $protocol = str_starts_with($url, 'https') ? 'https' : 'http';
 
         curl_setopt($this->ch, CURLOPT_URL, $url . '?' . http_build_query($query));
 
+        if(!empty($header)) {
+            curl_setopt($this->ch, CURLOPT_HTTPHEADER, $header);
+        }
         return $this->curlToJson($protocol);
     }
 
@@ -36,15 +46,17 @@ class HttpClient
      */
     public function post($url = '', $query = [])
     {
+        $this->init();
+
         $protocol = str_starts_with($url, 'https') ? 'https' : 'http';
 
         curl_setopt($this->ch, CURLOPT_POST, 1);
         curl_setopt($this->ch, CURLOPT_URL, $url);
         curl_setopt($this->ch, CURLOPT_POSTFIELDS, http_build_query($query));
-        curl_setopt($this->ch, CURLOPT_HTTPHEADER, array(
+        curl_setopt($this->ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/x-www-form-urlencoded',
             'Content-Length: ' . strlen(http_build_query($query)),
-        ));
+        ]);
 
         return $this->curlToJson($protocol);
     }
@@ -70,6 +82,8 @@ class HttpClient
         if (curl_errno($this->ch)) {
             $rawData = null;
         }
+
+        $this->close();
 
         $jsonData = empty($rawData) ? null : json_decode($rawData, true);
         
