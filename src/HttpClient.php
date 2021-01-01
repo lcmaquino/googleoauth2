@@ -23,7 +23,7 @@ class HttpClient
      * @param array $query
      * @return array|null
      */
-    public function get($url = '', $query = [], $header = [])
+    public function get($url = '', $query = [])
     {
         $this->init();
 

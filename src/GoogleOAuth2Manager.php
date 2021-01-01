@@ -71,7 +71,7 @@ class GoogleOAuth2Manager
     /**
      * The cached user instance.
      *
-     * @var \Lcmaquino\MiniGoogleClient\GoogleUser|null
+     * @var \Lcmaquino\GoogleOAuth2\GoogleUser|null
      */
     protected $user;
 
@@ -91,12 +91,13 @@ class GoogleOAuth2Manager
             'email'
         ];
         $this->httpClient = new HttpClient();
+        $this->user = null;
     }
 
     /**
      * Set the HTTP client instance.
      *
-     * @param  \Lcmaquino\MiniGoogleClient\HttpClient  $client
+     * @param  \Lcmaquino\GoogleOAuth2\HttpClient  $client
      * @return $this
      */
     protected function setHttpClient(HttpClient $client)
@@ -108,7 +109,7 @@ class GoogleOAuth2Manager
     /**
      * Get a instance of the HTTP client.
      *
-     * @return \Lcmaquino\MiniGoogleClient\HttpClient
+     * @return \Lcmaquino\GoogleOAuth2\HttpClient
      */
     protected function getHttpClient()
     {
@@ -163,6 +164,19 @@ class GoogleOAuth2Manager
     }
 
     /**
+     * Get the configuration of the Google OAuth 2.0 Client.
+     *
+     * @return void
+     */
+    public function getConfig(){
+        return [
+            'client_id' => $this->clientId,
+            'client_secret' => $this->clientSecret,
+            'client_redirect' => $this->redirectUri,
+        ];
+    }
+
+    /**
      * Set the custom parameters of the request.
      *
      * @param  array  $parameters
@@ -173,6 +187,16 @@ class GoogleOAuth2Manager
         $this->parameters = $parameters;
 
         return $this;
+    }
+
+    /**
+     * Get the custom parameters of the request.
+     *
+     * @return array
+     */
+    public function getParameters()
+    {
+        return $this->parameters;
     }
 
     /**
@@ -258,6 +282,19 @@ class GoogleOAuth2Manager
     }
 
     /**
+     * Get the GET fields for the user info request.
+     *
+     * @param  string  $token
+     * @return array
+     */
+    protected function getUserInfoFields($token = '')
+    {
+        return [
+            'access_token' => $token,
+        ];
+    }
+
+    /**
      * Get the POST fields for the refresh token request.
      *
      * @param  string  $refresh_token
@@ -296,6 +333,7 @@ class GoogleOAuth2Manager
     protected function buildAuthUrlFromBase($url, $state)
     {
         $query = http_build_query($this->getCodeFields($state), '', '&', $this->encodingType);
+
         return $url . '?' . $query;
     }
 
@@ -308,6 +346,7 @@ class GoogleOAuth2Manager
     protected function formatScopes(array $scopes)
     {
         $scopeSeparator = ' ';
+
         return implode($scopeSeparator, $scopes);
     }
 
@@ -319,7 +358,11 @@ class GoogleOAuth2Manager
      */
     protected function getAccessTokenResponse($code = '')
     {
-        $response = $this->getHttpClient()->post($this->getTokenUrl(), $this->getTokenFields($code));
+        $response = empty($code) ? null : 
+            $this->getHttpClient()->post(
+                $this->getTokenUrl(),
+                $this->getTokenFields($code)
+            );
 
         return $response;
     }
@@ -330,11 +373,13 @@ class GoogleOAuth2Manager
      * @param  string  $token
      * @return array
      */
-    protected function getUserInfoResponse($token)
+    protected function getUserInfoResponse($token = '')
     {
-        $response = $this->getHttpClient()->get($this->getUserInfoUrl(), [
-            'access_token' => $token,
-        ]);
+        $response = empty($token) ? null : 
+            $this->getHttpClient()->get(
+                $this->getUserInfoUrl(), 
+                $this->getUserInfoFields($token)
+            );
 
         return $response;
     }
@@ -347,7 +392,11 @@ class GoogleOAuth2Manager
      */
     protected function getRefreshTokenResponse($refresh_token = '')
     {
-        $response = $this->getHttpClient()->post($this->getTokenUrl(), $this->getRefreshTokenFields($refresh_token));
+        $response = empty($refresh_token) ? null : 
+            $this->getHttpClient()->post(
+                $this->getTokenUrl(), 
+                $this->getRefreshTokenFields($refresh_token)
+            );
 
         return $response;
     }
@@ -360,7 +409,11 @@ class GoogleOAuth2Manager
      */
     protected function getRevokeTokenResponse($token = '')
     {
-        $response = $this->getHttpClient()->get($this->getRevokeTokenUrl(), $this->getRevokeTokenFields($token));
+        $response = empty($token) ? null :
+            $this->getHttpClient()->get(
+                $this->getRevokeTokenUrl(),
+                $this->getRevokeTokenFields($token)
+            );
 
         return $response;
     }
@@ -369,7 +422,7 @@ class GoogleOAuth2Manager
      * Map the raw user array to a Google User instance.
      *
      * @param  array  $user
-     * @return \Lcmaquino\MiniGoogleClient\GoogleUser
+     * @return \Lcmaquino\GoogleOAuth2\GoogleUser
      */
     protected function mapUserToObject(array $user)
     {
@@ -462,14 +515,10 @@ class GoogleOAuth2Manager
      * Get the user coming from Google authentication.
      *
      * @param  Illuminate\Http\Request $request
-     * @return \Lcmaquino\MiniGoogleClient\GoogleUser|null
+     * @return \Lcmaquino\GoogleOAuth2\GoogleUser|null
      */
     public function getUserFromAuth(Request $request)
     {
-        if ($this->user) {
-            return $this->user;
-        }
-
         if ($this->hasInvalidState($request)) {
             return null;
         }
@@ -481,19 +530,21 @@ class GoogleOAuth2Manager
             return null;
         }
 
-        $this->user = $this->getUserFromToken($token);
+        $user = $this->getUserFromToken($token);
 
-        return $this->user->setRefreshToken(Arr::get($response, 'refresh_token'))
-                    ->setExpiresIn(Arr::get($response, 'expires_in'));
+        return empty($user) ? null : 
+            $this->user
+                ->setRefreshToken(Arr::get($response, 'refresh_token'))
+                ->setExpiresIn(Arr::get($response, 'expires_in'));
     }
 
     /**
      * Get a Google User instance from a known access token.
      *
      * @param  string  $token
-     * @return \Lcmaquino\MiniGoogleClient\GoogleUser
+     * @return \Lcmaquino\GoogleOAuth2\GoogleUser
      */
-    public function getUserFromToken($token)
+    public function getUserFromToken($token = '')
     {
         $response = $this->getUserInfoResponse($token);
 
@@ -501,9 +552,9 @@ class GoogleOAuth2Manager
             return null;
         }
 
-        $user = $this->mapUserToObject($response);
+        $this->user = $this->mapUserToObject($response);
 
-        return $user->setToken($token);
+        return $this->user->setToken($token);
     }
 
     /**
@@ -522,8 +573,7 @@ class GoogleOAuth2Manager
     /**
      * Revoke the user's access token and refresh token (at the same time).
      * The $token parameter can be the access token or the refresh token.
-     * 
-     * Returns true if the token was revoked.
+     * Returns true if the token was revoked and false otherwise.
      * 
      * @param  string  $token
      * @return boolean
