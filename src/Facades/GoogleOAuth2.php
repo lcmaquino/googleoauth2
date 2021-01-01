@@ -14,6 +14,6 @@ class GoogleOAuth2 extends Facade {
      * @return string
      */
     protected static function getFacadeAccessor() { 
-        return 'goa2m';
+        return GoogleOAuth2Manager::class;
     }
 }

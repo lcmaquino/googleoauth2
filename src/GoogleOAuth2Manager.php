@@ -2,9 +2,6 @@
 
 namespace Lcmaquino\GoogleOAuth2;
 
-use Lcmaquino\GoogleOAuth2\GoogleUser;
-use Lcmaquino\GoogleOAuth2\HttpClient;
-
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;

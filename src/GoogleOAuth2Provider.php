@@ -13,7 +13,7 @@ class GoogleOAuth2Provider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->bind('goa2m', function($app){
+        $this->app->bind(GoogleOAuth2Manager::class, function($app){
             return new GoogleOAuth2Manager(config('googleoauth2'));
         });
     }
@@ -25,7 +25,7 @@ class GoogleOAuth2Provider extends ServiceProvider
      */
     public function provides()
     {
-        return ['goa2m'];
+        return [GoogleOAuth2Manager::class];
     }
 
     /**
