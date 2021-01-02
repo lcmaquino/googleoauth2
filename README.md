@@ -93,16 +93,16 @@ class LoginController extends Controller
 {
     public function redirectToProvider(Request $request)
     {
-        $ga = new GoogleOAuth2Manager(config('googleoauth2'));
+        $ga = new GoogleOAuth2Manager(config('googleoauth2'), $request);
 
-        return $ga->redirect($request);
+        return $ga->redirect();
     }
 
     public function handleProviderCallback(Request $request)
     {
-        $ga = new GoogleOAuth2Manager(config('googleoauth2'));
+        $ga = new GoogleOAuth2Manager(config('googleoauth2'), $request);
         
-        $user = $ga->getUserFromAuth($request);
+        $user = $ga->user();
 
         if(empty($user)) {
             //$user is not logged in.
@@ -121,8 +121,8 @@ When you hit the route `login/google` it will redirect your request to
 Google authentication page. Google authentication will ask user 
 for permission and then hit your callback route `login/google/callback`.
 
-If user has allowed your application to login with their Google account, 
-then $user is:
+If the user has allowed your application to login with their Google account, 
+then $user looks like:
 ```
 Lcmaquino\GoogleOAuth2\GoogleUser {
     #sub: "1234"
@@ -142,7 +142,7 @@ Lcmaquino\GoogleOAuth2\GoogleUser {
 }
 ```
 
-See **Access Scopes** for more details.
+See **Access Scopes** and **Retrieving User Details** for more details.
 
 GoogleOAuth2 comes with a GoogleAuth facade. So you could edit `app/Http/Controllers/Auth/LoginController.php` like this:
 ```
@@ -159,12 +159,12 @@ class LoginController extends Controller
 {
     public function redirectToProvider(Request $request)
     {
-        return GoogleAuth::redirect($request);
+        return GoogleAuth::redirect();
     }
 
     public function handleProviderCallback(Request $request)
     {
-        $user = GoogleAuth::getUserFromAuth($request);
+        $user = GoogleAuth::user();
 
         if(empty($user)) {
             //$user is not logged in.
@@ -187,14 +187,13 @@ $params = [
     'approval_prompt' => 'force',
 ];
 
-return GoogleAuth::with($params)
-    ->redirect($request);
+return GoogleAuth::with($params)->redirect();
 ```
 
 ## Access Scopes
 
-The scopes are used for Google to limit your application access to the user account data.
-Use the method `scopes` to set your scopes. The defaults are `openid` and `email`.
+The scopes are used by Google to limit your application access to the user account data.
+Use the `scopes` method to set your scopes. The defaults are `openid` and `email`.
 ```
 $scopes = [
     'openid',
@@ -202,30 +201,29 @@ $scopes = [
     'profile',
 ];
 
-return GoogleAuth::scopes($scopes)
-    ->redirect($request);
+return GoogleAuth::scopes($scopes)->redirect();
 ```
 
 ## Stateless Authentication
 
 The `stateless` method disable session state verification.
 ```
-$user = GoogleAuth::stateless()->getUserFromAuth($request);
+$user = GoogleAuth::stateless()->user();
 ```
 
 ## Retrieving User Details
 
 Once you have an authenticated `$user`, you can get more details about the user:
 ```
-$user = GoogleAuth::getUserFromAuth($request);
+$user = GoogleAuth::user();
 
-$user->getSub();
+$user->getSub(); //the unique Google identifier for the user.
 $user->getName();
 $user->getEmail();
 $user->emailVerified();
 $user->getPicture();
 $user->getToken();
-$user->getRefreshToken();// not always provided
+$user->getRefreshToken(); //not always provided
 $user->getExpiresIn();
 ```
 
@@ -257,8 +255,7 @@ $params = [
     'access_type' => 'offline',
 ];
 
-return GoogleAuth::with($params)
-    ->redirect($request);
+return GoogleAuth::with($params)->redirect();
 ```
 
 ## Revoking token

@@ -1,6 +1,6 @@
 {
     "name": "lcmaquino/googleoauth2",
-    "description": "GoogleOAuth2 provides to Laravel an package for Google OAuth 2.0 authentication.",
+    "description": "GoogleOAuth2 adds to Laravel a service provider for Google OAuth 2.0 authentication.",
     "keywords": ["oauth", "google", "laravel"],
     "license": "GPL-3.0-or-later",
     "homepage": "https://github.com/lcmaquino/googleoauth2",

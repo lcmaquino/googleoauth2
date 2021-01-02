@@ -10,7 +10,14 @@ use Illuminate\Support\Str;
 class GoogleOAuth2Manager
 {
     /**
-     * The HTTP Client instance.
+     * The Request instance.
+     * 
+     * @var Illuminate\Http\Request
+     */
+    protected $request;
+
+    /**
+     * The HttpClient instance.
      *
      * @var \Lcmaquino\HttpClient
      */
@@ -73,13 +80,14 @@ class GoogleOAuth2Manager
     protected $user;
 
     /**
-     * Create a new GoogleClient instance.
+     * Create a new GoogleOAuth2Manager instance.
      * 
      * @param  array  $config
      * @return void
      */
-    public function __construct($config = [])
+    public function __construct($config = [], Request $request = null)
     {
+        $this->request = $request;
         $this->clientId = $config['client_id'];
         $this->redirectUri = $config['redirect_uri'];
         $this->clientSecret = $config['client_secret'];
@@ -89,6 +97,28 @@ class GoogleOAuth2Manager
         ];
         $this->httpClient = new HttpClient();
         $this->user = null;
+    }
+
+    /**
+     * Set the Request instance.
+     *
+     * @param  Illuminate\Http\Request  $request
+     * @return $this
+     */
+    protected function setRequest(Request  $request)
+    {
+        $this->request = $request;
+        return $this;
+    }
+
+    /**
+     * Get the Request instance.
+     *
+     * @return Illuminate\Http\Request
+     */
+    protected function getRequest()
+    {
+        return $this->request;
     }
 
     /**
@@ -250,7 +280,7 @@ class GoogleOAuth2Manager
         $fields = [
             'client_id' => $this->clientId,
             'redirect_uri' => $this->redirectUri,
-            'scope' => $this->formatScopes($this->getScopes()),
+            'scope' => $this->formatScopes($this->scopes),
             'response_type' => 'code',
         ];
 
@@ -416,24 +446,24 @@ class GoogleOAuth2Manager
     }
 
     /**
-     * Map the raw user array to a Google User instance.
+     * Map the raw user array to a GoogleUser instance.
      *
-     * @param  array  $user
+     * @param  array  $rawAttributes
      * @return \Lcmaquino\GoogleOAuth2\GoogleUser
      */
-    protected function mapUserToObject(array $user)
+    protected function mapUserToObject(array $rawAttributes)
     {
-        return (new GoogleUser)->setRaw($user)->map([
-            'sub' => Arr::get($user, 'sub'),
-            'name' => Arr::get($user, 'name'),
-            'email' => Arr::get($user, 'email'),
-            'emailVerified' => Arr::get($user, 'email_verified'),
-            'picture' => Arr::get($user, 'picture'),
+        return (new GoogleUser)->setRaw($rawAttributes)->map([
+            'sub' => Arr::get($rawAttributes, 'sub'),
+            'name' => Arr::get($rawAttributes, 'name'),
+            'email' => Arr::get($rawAttributes, 'email'),
+            'emailVerified' => Arr::get($rawAttributes, 'email_verified'),
+            'picture' => Arr::get($rawAttributes, 'picture'),
         ]);
     }
 
     /**
-     * Determine if the Google Client is operating with state.
+     * Determine if the GoogleOAuth2 is operating with state.
      *
      * @return bool
      */
@@ -443,7 +473,7 @@ class GoogleOAuth2Manager
     }
 
     /**
-     * Determine if the Google Client is operating as stateless.
+     * Determine if the GoogleOAuth2 is operating as stateless.
      *
      * @return bool
      */
@@ -453,7 +483,7 @@ class GoogleOAuth2Manager
     }
 
     /**
-     * Indicates that the Google Client should operate as stateless.
+     * Indicates that the GoogleOAuth2 should operate as stateless.
      *
      * @return $this
      */
@@ -492,35 +522,37 @@ class GoogleOAuth2Manager
     }
 
     /**
-     * Redirect the user from the application to the Google authentication screen.
+     * Redirect the user from the application to the Google authentication page.
      *
-     * @param  Illuminate\Http\Request $request
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function redirect(Request $request)
+    public function redirect()
     {
         $state = null;
 
         if ($this->usesState()) {
-            $request->session()->put('state', $state = $this->getState());
+            $this->request->session()->put('state', $state = $this->getState());
         }
 
         return new RedirectResponse($this->getAuthUrl($state));
     }
 
     /**
-     * Get the user coming from Google authentication.
+     * Get the user coming from Google authentication request.
      *
-     * @param  Illuminate\Http\Request $request
      * @return \Lcmaquino\GoogleOAuth2\GoogleUser|null
      */
-    public function getUserFromAuth(Request $request)
+    public function user()
     {
-        if ($this->hasInvalidState($request)) {
+        if (!empty($this->user)) {
+            return $this->user;
+        }
+
+        if ($this->hasInvalidState($this->request)) {
             return null;
         }
 
-        $response = $this->getAccessTokenResponse($request->input('code'));
+        $response = $this->getAccessTokenResponse($this->request->input('code'));
         $token = Arr::get($response, 'access_token');
 
         if(empty($token)) {
@@ -536,7 +568,7 @@ class GoogleOAuth2Manager
     }
 
     /**
-     * Get a Google User instance from a known access token.
+     * Get a GoogleUser instance from a known access token.
      *
      * @param  string  $token
      * @return \Lcmaquino\GoogleOAuth2\GoogleUser
