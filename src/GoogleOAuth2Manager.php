@@ -88,9 +88,7 @@ class GoogleOAuth2Manager
     public function __construct($config = [], Request $request = null)
     {
         $this->request = $request;
-        $this->clientId = $config['client_id'];
-        $this->redirectUri = $config['redirect_uri'];
-        $this->clientSecret = $config['client_secret'];
+        $this->setConfig($config);
         $this->scopes = [
             'openid',
             'email'
@@ -122,7 +120,7 @@ class GoogleOAuth2Manager
     }
 
     /**
-     * Set the HTTP client instance.
+     * Set the HttpClient instance.
      *
      * @param  \Lcmaquino\GoogleOAuth2\HttpClient  $client
      * @return $this
@@ -134,7 +132,7 @@ class GoogleOAuth2Manager
     }
 
     /**
-     * Get a instance of the HTTP client.
+     * Get a instance of the HttpClient.
      *
      * @return \Lcmaquino\GoogleOAuth2\HttpClient
      */
@@ -191,7 +189,27 @@ class GoogleOAuth2Manager
     }
 
     /**
-     * Get the configuration of the Google OAuth 2.0 Client.
+     * Set the configuration of the Google OAuth 2.0 client.
+     *
+     * The $config parameter should be formatted as:
+     *   [
+     *     'client_id' => string,
+     *     'client_secret' => string,
+     *     'redirect_uri' => string
+     *   ]
+     *
+     * @param array  $config
+     * @return $this
+     */
+    public function setConfig($config = []){
+        $this->clientId = $config['client_id'];
+        $this->clientSecret = $config['client_secret'];
+        $this->redirectUri = $config['redirect_uri'];
+        return $this;
+    }
+
+    /**
+     * Get the configuration of the Google OAuth 2.0 client.
      *
      * @return void
      */
