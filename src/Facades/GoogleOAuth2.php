@@ -2,7 +2,7 @@
 
 namespace Lcmaquino\GoogleOAuth2\Facades;
 
-use Lcmaquino\GoogleOAuth2\GoogleOAuthManager;
+use Lcmaquino\GoogleOAuth2\GoogleOAuth2Manager;
 
 use Illuminate\Support\Facades\Facade;
 
